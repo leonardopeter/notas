@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema Escolar — Dashboard de Notas</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide-icons@0.244.0/dist/lucide.js"></script>
+
+  <style>
+    .nota-input { width: 3.2rem; }
+    .modal-backdrop { background: rgba(2,6,23,0.6); }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50 text-gray-800">
+
+  <div class="max-w-7xl mx-auto p-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+      <div class="flex items-center gap-4">
+        <div class="rounded-2xl bg-white p-3 shadow-md flex items-center gap-3">
+          <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 text-xl">🎓</div>
+          <div>
+            <h1 class="text-2xl font-bold">Sistema Escolar Interativo</h1>
+            <p class="text-sm text-gray-500">Controle de alunos, notas e situação final</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="openNewBtn" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-2xl shadow hover:scale-105 transition">
+          <i data-lucide="plus-square" class="w-4 h-4"></i> Novo Aluno
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="exportBtn" class="px-3 py-2 bg-white rounded-2xl shadow hover:bg-gray-100 transition text-sm">Exportar JSON</button>
+          <label for="importFile" class="px-3 py-2 bg-white rounded-2xl shadow hover:bg-gray-100 transition text-sm cursor-pointer">Importar</label>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+        </div>
+      </div>
+    </header>
+
+    <!-- Estatísticas -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-2xl p-4 shadow-md flex flex-col">
+        <div class="text-xs text-gray-400">Total de Alunos</div>
+        <div id="statTotal" class="text-2xl font-bold mt-2">0</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-md flex flex-col">
+        <div class="text-xs text-gray-400">Aprovados</div>
+        <div id="statApproved" class="text-2xl font-bold mt-2 text-green-600">0</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-md flex flex-col">
+        <div class="text-xs text-gray-400">Recuperação</div>
+        <div id="statRecovery" class="text-2xl font-bold mt-2 text-yellow-600">0</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-md flex flex-col">
+        <div class="text-xs text-gray-400">Reprovados</div>
+        <div id="statFail" class="text-2xl font-bold mt-2 text-red-600">0</div>
+      </div>
+    </section>
+
+    <!-- Filtros -->
+    <section class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+      <div class="flex items-center gap-3 w-full md:w-1/2">
+        <input id="searchInput" type="text" placeholder="Pesquisar por nome ou e-mail" class="w-full p-3 rounded-2xl shadow-sm border focus:ring-2 focus:ring-indigo-200" />
+      </div>
+      <div class="flex items-center gap-3">
+        <select id="filterStatus" class="p-3 rounded-2xl shadow-sm border">
+          <option value="all">Todas as situações</option>
+          <option value="Aprovado">Aprovado</option>
+          <option value="Recuperação">Recuperação</option>
+          <option value="Reprovado">Reprovado</option>
+        </select>
+        <button id="clearAllBtn" class="px-3 py-2 bg-white rounded-2xl shadow hover:bg-gray-100">Limpar todos</button>
+      </div>
+    </section>
+
+    <!-- Tabela -->
+    <section class="bg-white rounded-2xl shadow p-4">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm table-auto">
+          <thead class="text-left text-xs text-gray-500 border-b">
+            <tr>
+              <th class="py-3">Nome</th>
+              <th>Email</th>
+              <th>Bimestres (0–25)</th>
+              <th>Total/100</th>
+              <th>Situação</th>
+              <th class="text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTable" class="divide-y"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="text-center text-xs text-gray-500 mt-6">© 2025 — Sistema Escolar Interativo</footer>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 hidden items-center justify-center modal-backdrop z-50">
+    <div class="bg-white rounded-2xl w-full max-w-3xl p-6 shadow-xl transform transition">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="modalTitle" class="text-lg font-semibold">Novo Aluno</h2>
+        <button id="closeModal" class="text-gray-500 hover:text-gray-700">Fechar ✕</button>
+      </div>
+
+      <form id="studentForm" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm font-medium">Nome</label>
+            <input id="name" class="w-full p-3 border rounded-2xl" placeholder="Nome completo" required />
+          </div>
+          <div>
+            <label class="text-sm font-medium">Email</label>
+            <input id="email" type="email" class="w-full p-3 border rounded-2xl" placeholder="email@gmail.com" required />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-sm font-medium">Notas (cada nota 0 a 5)</label>
+          <div id="bimestersContainer" class="mt-2 grid grid-cols-1 gap-3"></div>
+          <div class="text-xs text-gray-500 mt-2">Cada bimestre soma até 25 pontos (5 notas de 0–5).</div>
+        </div>
+
+        <div class="flex items-center gap-3 justify-end">
+          <button type="button" id="cancelBtn" class="px-4 py-2 rounded-2xl bg-gray-100">Cancelar</button>
+          <button type="submit" id="saveBtn" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white">Salvar Aluno</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Script principal -->
+  <script>
+    const BIMESTERS = 4, NOTES_PER_BIM = 5, STORAGE_KEY = 'sistema_alunos_v1';
+    const TH_APPROVE = 70, TH_RECOVERY = 50;
+
+    const modal = document.getElementById('modal');
+    const openNewBtn = document.getElementById('openNewBtn');
+    const closeModal = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const bimestersContainer = document.getElementById('bimestersContainer');
+    const studentsTable = document.getElementById('studentsTable');
+    const statTotal = document.getElementById('statTotal');
+    const statApproved = document.getElementById('statApproved');
+    const statRecovery = document.getElementById('statRecovery');
+    const statFail = document.getElementById('statFail');
+    const searchInput = document.getElementById('searchInput');
+    const filterStatus = document.getElementById('filterStatus');
+    const exportBtn = document.getElementById('exportBtn');
+    const importFile = document.getElementById('importFile');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+
+    let editingIndex = null;
+
+    function createBimInputs() {
+      bimestersContainer.innerHTML = '';
+      for (let b = 0; b < BIMESTERS; b++) {
+        const card = document.createElement('div');
+        card.className = 'p-3 border rounded-lg bg-gray-50';
+        card.innerHTML = `<div class="flex items-center justify-between mb-2">
+          <div class='font-medium'>Bimestre ${b + 1}</div>
+          <div class='text-xs text-gray-500'>Total: <span id='b${b}Total'>0</span>/25</div>
+        </div>`;
+        const inputsWrap = document.createElement('div');
+        inputsWrap.className = 'flex gap-2 flex-wrap';
+        for (let n = 0; n < NOTES_PER_BIM; n++) {
+          const inp = document.createElement('input');
+          inp.type = 'number'; inp.min = '0'; inp.max = '5'; inp.step = '0.1'; inp.value = '0';
+          inp.className = 'nota-input p-2 border rounded text-center';
+          inp.dataset.bim = b; inp.dataset.note = n;
+          inp.addEventListener('input', updateBimTotals);
+          inputsWrap.appendChild(inp);
+        }
+        card.appendChild(inputsWrap);
+        bimestersContainer.appendChild(card);
+      }
+    }
+
+    function readNotesFromModal() {
+      const result = [];
+      for (let b = 0; b < BIMESTERS; b++) {
+        const inputs = document.querySelectorAll(`input[data-bim='${b}']`);
+        result.push(Array.from(inputs).map(i => parseFloat(i.value) || 0));
+      }
+      return result;
+    }
+
+    function calculateTotals(notesByBim) {
+      let totalGeneral = 0, totals = [];
+      for (let b = 0; b < notesByBim.length; b++) {
+        let sum = notesByBim[b].reduce((a, v) => a + v, 0);
+        if (sum > 25) sum = 25;
+        totals.push(sum);
+        totalGeneral += sum;
+      }
+      return { totals, totalGeneral: parseFloat(totalGeneral.toFixed(1)) };
+    }
+
+    function determineSituation(total) {
+      if (total >= TH_APPROVE) return 'Aprovado';
+      if (total >= TH_RECOVERY) return 'Recuperação';
+      return 'Reprovado';
+    }
+
+    function updateBimTotals() {
+      const { totals } = calculateTotals(readNotesFromModal());
+      totals.forEach((t, i) => {
+        const el = document.getElementById(`b${i}Total`);
+        if (el) el.textContent = t.toFixed(1);
+      });
+    }
+
+    function loadData() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch { return []; }
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function renderTable() {
+      const data = loadData();
+      const q = (searchInput.value || '').toLowerCase();
+      const statusFilter = filterStatus.value;
+
+      studentsTable.innerHTML = '';
+      let cntTotal = 0, cntAprov = 0, cntRec = 0, cntRep = 0;
+
+      data.forEach((s, idx) => {
+        if (q && !(`${s.name} ${s.email}`.toLowerCase().includes(q))) return;
+        if (statusFilter !== 'all' && s.situation !== statusFilter) return;
+
+        cntTotal++;
+        if (s.situation === 'Aprovado') cntAprov++;
+        else if (s.situation === 'Recuperação') cntRec++;
+        else cntRep++;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="py-3">${escapeHtml(s.name)}</td>
+          <td>${escapeHtml(s.email)}</td>
+          <td>${(s.totals || []).map(t => `${t.toFixed(1)}/25`).join(' | ')}</td>
+          <td class="font-semibold text-center">${s.total.toFixed(1)}</td>
+          <td>
+            <span class="px-3 py-1 rounded-full text-xs font-medium ${
+              s.situation === 'Aprovado' ? 'bg-green-100 text-green-700' :
+              s.situation === 'Recuperação' ? 'bg-yellow-100 text-yellow-700' :
+              'bg-red-100 text-red-700'
+            }">${s.situation}</span>
+          </td>
+          <td class="text-right">
+            <button data-idx="${idx}" class="editBtn mr-2 text-sm text-indigo-600">Editar</button>
+            <button data-idx="${idx}" class="delBtn text-sm text-red-600">Excluir</button>
+          </td>`;
+        studentsTable.appendChild(tr);
+      });
+
+      statTotal.textContent = cntTotal;
+      statApproved.textContent = cntAprov;
+      statRecovery.textContent = cntRec;
+      statFail.textContent = cntRep;
+
+      document.querySelectorAll('.delBtn').forEach(b => b.onclick = (e) => { const i = e.target.dataset.idx; if (confirm('Excluir este aluno?')) deleteStudent(i); });
+      document.querySelectorAll('.editBtn').forEach(b => b.onclick = (e) => openEditModal(e.target.dataset.idx));
+    }
+
+    function deleteStudent(index) {
+      const all = loadData();
+      all.splice(index, 1);
+      saveData(all);
+      renderTable();
+    }
+
+    function openModal() { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    function closeModalFn() { modal.classList.add('hidden'); modal.classList.remove('flex'); editingIndex = null; document.getElementById('studentForm').reset(); createBimInputs(); }
+
+    openNewBtn.onclick = () => { document.getElementById('modalTitle').textContent = 'Novo Aluno'; editingIndex = null; createBimInputs(); openModal(); };
+    closeModal.onclick = closeModalFn;
+    cancelBtn.onclick = closeModalFn;
+
+    function openEditModal(index) {
+      const all = loadData();
+      const s = all[index];
+      if (!s) return;
+      editingIndex = index;
+      document.getElementById('modalTitle').textContent = 'Editar Aluno';
+      openModal();
+      document.getElementById('name').value = s.name;
+      document.getElementById('email').value = s.email;
+      createBimInputs();
+      setTimeout(() => {
+        s.notes.forEach((bim, b) => bim.forEach((val, n) => {
+          const inp = document.querySelector(`input[data-bim='${b}'][data-note='${n}']`);
+          if (inp) inp.value = val;
+        }));
+        updateBimTotals();
+      }, 0);
+    }
+
+    document.getElementById('studentForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      if (!name || !email) return alert('Preencha nome e e-mail.');
+      if (!email.endsWith('@gmail.com')) return alert('O e-mail deve ser do Gmail (@gmail.com).');
+
+      const notes = readNotesFromModal();
+      const { totals, totalGeneral } = calculateTotals(notes);
+      const situation = determineSituation(totalGeneral);
+      const all = loadData();
+
+      const duplicate = all.find((s, i) =>
+        s.name.toLowerCase() === name.toLowerCase() &&
+        s.email.toLowerCase() === email &&
+        i !== editingIndex
+      );
+      if (duplicate) return alert('Já existe um aluno com esse nome e e-mail.');
+
+      const payload = { name, email, notes, totals, total: totalGeneral, situation, created_at: new Date().toISOString() };
+
+      if (editingIndex === null) all.push(payload);
+      else all[editingIndex] = payload;
+
+      saveData(all);
+      closeModalFn();
+      renderTable();
+    });
+
+    exportBtn.onclick = () => {
+      const data = loadData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'alunos.json'; a.click(); URL.revokeObjectURL(url);
+    };
+
+    importFile.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const json = JSON.parse(text);
+        if (!Array.isArray(json)) throw new Error('Formato inválido');
+        if (confirm('Deseja mesclar os dados importados com os existentes? (OK = mesclar, Cancelar = substituir)')) {
+          const merged = [...loadData(), ...json];
+          saveData(merged);
+        } else saveData(json);
+        renderTable();
+      } catch { alert('Arquivo inválido.'); }
+    };
+
+    clearAllBtn.onclick = () => { if (confirm('Tem certeza que deseja apagar todos os dados?')) { localStorage.removeItem(STORAGE_KEY); renderTable(); } };
+
+    searchInput.oninput = filterStatus.onchange = renderTable;
+
+    function escapeHtml(t) { return t.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])); }
+
+    renderTable();
+    lucide.createIcons();
+  </script>
+
+</body>
+</html>
