@@ -151,30 +151,51 @@
 
     let editingIndex = null;
 
-    function createBimInputs() {
-      bimestersContainer.innerHTML = '';
-      for (let b = 0; b < BIMESTERS; b++) {
-        const card = document.createElement('div');
-        card.className = 'p-3 border rounded-lg bg-gray-50';
-        card.innerHTML = `<div class="flex items-center justify-between mb-2">
-          <div class='font-medium'>Bimestre ${b + 1}</div>
-          <div class='text-xs text-gray-500'>Total: <span id='b${b}Total'>0</span>/25</div>
-        </div>`;
-        const inputsWrap = document.createElement('div');
-        inputsWrap.className = 'flex gap-2 flex-wrap';
-        for (let n = 0; n < NOTES_PER_BIM; n++) {
-          const inp = document.createElement('input');
-          inp.type = 'number'; inp.min = '0'; inp.max = '5'; inp.step = '0.1'; inp.value = '0';
-          inp.className = 'nota-input p-2 border rounded text-center';
-          inp.dataset.bim = b; inp.dataset.note = n;
-          inp.addEventListener('input', updateBimTotals);
-          inputsWrap.appendChild(inp);
-        }
-        card.appendChild(inputsWrap);
-        bimestersContainer.appendChild(card);
+    function createBimInputs(prefix, data = {}) {
+  const container = document.createElement('div');
+  container.className = 'flex flex-col gap-2';
+
+  // cria as 5 caixas de notas
+  for (let i = 1; i <= 5; i++) {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = 0;
+    input.max = 5;
+    input.step = 0.1;
+    input.value = data[`n${i}`] ?? '';
+    input.className = 'border rounded p-1 w-20 text-center';
+
+    input.addEventListener('input', () => {
+      let value = parseFloat(input.value) || 0;
+
+      // Garante que o valor fique entre 0 e 5
+      if (value < 0) value = 0;
+      if (value > 5) value = 5;
+      input.value = value.toFixed(1);
+
+      // Checa o total do bimestre
+      const inputs = container.querySelectorAll('input');
+      const sum = Array.from(inputs).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+      if (sum > 25) {
+        alert('A soma das notas do bimestre não pode ultrapassar 25 pontos.');
+        input.value = '';
       }
-      updateBimTotals();
-    }
+
+      // Checa o total anual (somando todos os bimestres)
+      const allBimInputs = document.querySelectorAll('.bim input');
+      const totalAnual = Array.from(allBimInputs).reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0);
+      if (totalAnual > 100) {
+        alert('A soma total das notas do ano não pode ultrapassar 100 pontos.');
+        input.value = '';
+      }
+    });
+
+    container.appendChild(input);
+  }
+
+  container.classList.add('bim');
+  return container;
+}
 
     function readNotesFromModal() {
       const result = [];
@@ -417,3 +438,4 @@
 
 </body>
 </html>
+
