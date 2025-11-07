@@ -304,25 +304,17 @@
       }, 0);
     }
 
-    document.getElementById('studentForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim().toLowerCase();
-      if (!name || !email) return alert('Preencha nome e e-mail.');
-      if (!email.endsWith('@gmail.com')) return alert('O e-mail deve ser do Gmail (@gmail.com).');
+    const exists = all.some((aluno, idx) =>
+  aluno.name.toLowerCase() === name.toLowerCase() &&
+  aluno.email.toLowerCase() === email.toLowerCase() &&
+  idx !== editingIndex // <-- ignora o aluno que está sendo editado
+);
 
-      const notes = readNotesFromModal();
-      const { totals, totalGeneral } = calculateTotals(notes);
-      const situation = determineSituation(totalGeneral);
-      const all = loadData();
-
-      const duplicate = all.find((s, i) =>
-        s.name.toLowerCase() === name.toLowerCase() &&
-        s.email.toLowerCase() === email &&
-        i !== editingIndex
-      );
-      if (duplicate) return alert('Já existe um aluno com esse nome e e-mail.');
-
+if (exists) {
+  alert('Já existe um aluno cadastrado com este nome e email.');
+  return;
+}
+    
       const payload = { name, email, notes, totals, total: totalGeneral, situation, created_at: new Date().toISOString() };
 
       if (editingIndex === null) all.push(payload);
@@ -368,3 +360,4 @@
 
 </body>
 </html>
+
