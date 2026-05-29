@@ -1,426 +1,284 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sistema Escolar — Dashboard de Notas</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minha Lista Shein ✦</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f3ef;
+    --card: #ffffff;
+    --text: #1a1410;
+    --muted: #9e8e82;
+    --accent: #c9472b;
+    --accent2: #e8d5c4;
+    --border: #e4dbd4;
+  }
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide-icons@0.244.0/dist/lucide.js"></script>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  <style>
-    .nota-input { width: 3.2rem; }
-    .modal-backdrop { background: rgba(2,6,23,0.6); }
-  </style>
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.4;
+  }
+
+  header {
+    padding: 3rem 2rem 1.5rem;
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .header-left h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .header-left h1 em { font-style: italic; color: var(--accent); }
+
+  .header-left p {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .count-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .divider {
+    max-width: 960px;
+    margin: 0 auto 2rem;
+    padding: 0 2rem;
+    height: 1px;
+    background: linear-gradient(to right, var(--accent), var(--border), transparent);
+  }
+
+  #grid {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 580px) {
+    #grid { grid-template-columns: 1fr; padding: 0 1rem 3rem; }
+    header { padding: 2rem 1rem 1rem; }
+    .divider { padding: 0 1rem; }
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    animation: fadeUp 0.4s ease both;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.09);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-img-wrap {
+    aspect-ratio: 3/4;
+    background: var(--accent2);
+    overflow: hidden;
+  }
+
+  .card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .card:hover .card-img-wrap img { transform: scale(1.04); }
+
+  .img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    background: var(--accent2);
+  }
+
+  .card-body {
+    padding: 1rem 1.1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.45rem;
+  }
+
+  .card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-cta {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border);
+    transition: color 0.2s;
+  }
+
+  .card:hover .card-cta { color: var(--accent); }
+</style>
 </head>
-<body class="bg-gradient-to-r from-blue-200 to-indigo-300 min-h-screen flex flex-col scale-[0.9] origin-top">
+<body>
 
-  <div class="max-w-7xl mx-auto p-6">
-    <header class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-      <div class="flex items-center gap-4">
-        <div class="rounded-2xl bg-white p-3 shadow-md flex items-center gap-3">
-          <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 text-xl">🎓</div>
-          <div>
-            <h1 class="text-2xl font-bold">Sistema Escolar Interativo</h1>
-            <p class="text-sm text-gray-500">Controle de alunos, notas e situação final</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <button id="openNewBtn" class="flex items-center justify-center bg-indigo-600 text-white px-6 py-2 rounded-2xl shadow hover:scale-105 transition font-medium">
-  Novo Aluno
-</button>
-        <div class="flex items-center gap-2">
-          <button id="exportBtn" class="px-3 py-2 bg-white rounded-2xl shadow hover:bg-gray-100 transition text-sm">Exportar JSON</button>
-          <label for="importFile" class="px-3 py-2 bg-white rounded-2xl shadow hover:bg-gray-100 transition text-sm cursor-pointer">Importar</label>
-          <input id="importFile" type="file" accept="application/json" class="hidden" />
-        </div>
-      </div>
-    </header>
-
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white rounded-2xl p-4 shadow-md flex flex-col">
-        <div class="text-xs text-gray-400">Total de Alunos</div>
-        <div id="statTotal" class="text-2xl font-bold mt-2">0</div>
-      </div>
-      <div class="bg-white rounded-2xl p-4 shadow-md flex flex-col">
-        <div class="text-xs text-gray-400">Aprovados</div>
-        <div id="statApproved" class="text-2xl font-bold mt-2 text-green-600">0</div>
-      </div>
-      <div class="bg-white rounded-2xl p-4 shadow-md flex flex-col">
-        <div class="text-xs text-gray-400">Recuperação</div>
-        <div id="statRecovery" class="text-2xl font-bold mt-2 text-yellow-600">0</div>
-      </div>
-      <div class="bg-white rounded-2xl p-4 shadow-md flex flex-col">
-        <div class="text-xs text-gray-400">Reprovados</div>
-        <div id="statFail" class="text-2xl font-bold mt-2 text-red-600">0</div>
-      </div>
-    </section>
-
-    <section class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
-      <div class="flex items-center gap-3 w-full md:w-1/2">
-        <input id="searchInput" type="text" placeholder="Pesquisar por nome ou e-mail" class="w-full p-3 rounded-2xl shadow-sm border focus:ring-2 focus:ring-indigo-200" />
-      </div>
-      <div class="flex items-center gap-3">
-        <select id="filterStatus" class="p-3 rounded-2xl shadow-sm border">
-          <option value="all">Todas as situações</option>
-          <option value="Aprovado">Aprovado</option>
-          <option value="Recuperação">Recuperação</option>
-          <option value="Reprovado">Reprovado</option>
-        </select>
-        <button id="clearAllBtn" class="px-3 py-2 bg-white rounded-2xl shadow hover:bg-gray-100">Limpar todos</button>
-      </div>
-    </section>
-
-    <section class="bg-white rounded-2xl shadow p-4">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm table-auto">
-          <thead class="text-left text-xs text-gray-500 border-b">
-            <tr>
-              <th class="py-3">Nome</th>
-              <th>Email</th>
-              <th>Bimestres (0–25)</th>
-              <th>Total/100</th>
-              <th>Situação</th>
-              <th class="text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="studentsTable" class="divide-y"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <footer class="text-center text-xs text-gray-500 mt-6">© 2025 — Sistema Escolar Interativo</footer>
+<header>
+  <div class="header-left">
+    <h1>Minha Lista<br><em>Shein</em></h1>
+    <p>Wishlist curada ✦</p>
   </div>
+  <div class="count-badge">10 itens</div>
+</header>
 
-  <div id="modal" class="fixed inset-0 hidden items-center justify-center modal-backdrop z-50">
-    <div class="bg-white rounded-2xl w-full max-w-3xl p-6 shadow-xl transform scale-[0.8] transition">
-      <div class="flex items-center justify-between mb-4">
-        <h2 id="modalTitle" class="text-lg font-semibold">Novo Aluno</h2>
-        <button id="closeModal" class="text-gray-500 hover:text-gray-700">Fechar ✕</button>
-      </div>
+<div class="divider"></div>
 
-      <form id="studentForm" class="space-y-4" autocomplete="off">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label class="text-sm font-medium">Nome</label>
-            <input id="name" name="name" class="w-full p-3 border rounded-2xl" placeholder="Nome completo" required />
-          </div>
-          <div>
-            <label class="text-sm font-medium">Email</label>
-            <input id="email" name="email" type="email" class="w-full p-3 border rounded-2xl" placeholder="email@gmail.com" required />
-          </div>
-        </div>
+<div id="grid"></div>
 
-        <div>
-          <label class="text-sm font-medium">Notas (cada nota 0 a 5)</label>
-          <div id="bimestersContainer" class="mt-2 grid grid-cols-1 gap-3"></div>
-          <div class="text-xs text-gray-500 mt-2">Cada bimestre soma até 25 pontos (5 notas de 0–5).</div>
-        </div>
+<script>
+const products = [
+  {
+    nome: "Tênis Hocks Puff Preto Refletivo",
+    imagem: "https://img.ltwebstatic.com/v4/j/spmp/2026/04/02/5b/17751322240677555709ce2cf4108ee6fd6c9687b5_square.jpg",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6b8fv3UvS_8&localcountry=BR&shc=2_RV6b8fv3UvS&url_from=GM75733196900"
+  },
+  {
+    nome: "Tênis Hocks Puff Preto Refletivo",
+    imagem: "https://img.ltwebstatic.com/v4/j/spmp/2026/04/02/68/17751322214008471fd79696c3320c2b4d4e2afa27_square.jpg",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6nDUKodQN_8&localcountry=BR&shc=2_RV6nDUKodQN&url_from=GM75733196900"
+  },
+  {
+    nome: "Tênis Masculino HERTZ Skatista Tesla Antiderrapante",
+    imagem: "https://img.ltwebstatic.com/v4/p/spmp/2026/04/15/23/17761946399d3c54a799149c141ed9efa6cafd2506_square.png",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6nyBL7HvE_8&localcountry=BR&shc=2_RV6nyBL7HvE&url_from=GM75733196900"
+  },
+  {
+    nome: "Tênis Casual Esportivo Skate Feminino/Masculino Street",
+    imagem: "https://img.ltwebstatic.com/v4/j/spmp/2025/08/01/6d/17540489086f99806bdd01dfbb1cc9eb4e1c2ab241_square.jpg",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6IenQVKEa_8&localcountry=BR&shc=2_RV6IenQVKEa&url_from=GM75733196900"
+  },
+  {
+    nome: "Tênis Hylane Unissex Branco/Preto Estiloso Confortável",
+    imagem: "https://img.ltwebstatic.com/v4/p/spmp/2025/06/14/a1/17498314694f1764166edd95678e1875d457c872ea_squfix.png",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6xW3KuH2b_8&localcountry=BR&shc=2_RV6xW3KuH2b&url_from=GM75733196900"
+  },
+  {
+    nome: "PAVTROS Calça Moletom Masculina Folgada Streetwear Perna Larga",
+    imagem: "http://img.ltwebstatic.com/v4/j/pi/2025/11/24/e5/1763947775561e03c981ed0699f2179c0e9ce73eb9.jpg",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6bugbVEd3_8&localcountry=BR&shc=2_RV6bugbVEd3&url_from=GM75733196900"
+  },
+  {
+    nome: "PAVTROS Calça de Moletom Casual Cor Sólida Masculina",
+    imagem: "http://img.ltwebstatic.com/v4/j/pi/2025/11/24/94/176394822561fadebe9915f1a4a0df655e56f6b549.jpg",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6ntRlTAAy_8&localcountry=BR&shc=2_RV6ntRlTAAy&url_from=GM75733196900"
+  },
+  {
+    nome: "SUMWON Calça Reta Tipo Cargo com Listras Paraquedas",
+    imagem: "http://img.ltwebstatic.com/images3_pi/2024/09/27/02/1727406281c8446d165efcad0fffeb717eb10c1dcd.jpg",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6xHaTwJKJ_8&localcountry=BR&shc=2_RV6xHaTwJKJ&url_from=GM75733196900"
+  },
+  {
+    nome: "Moletom Masculino GRDR Cor Sólida com Zíper Manga Longa",
+    imagem: "https://img.ltwebstatic.com/v4/p/spmp/2026/04/25/34/1777089739ff4ebe56289e2716734f161f8948a34d.png",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6IaLhgfmH_8&localcountry=BR&shc=2_RV6IaLhgfmH&url_from=GM75733196900"
+  },
+  {
+    nome: "Suéter Casual de Malha Crewneck",
+    imagem: "https://img.ltwebstatic.com/v4/j/spmp/2025/04/28/0c/17457929565c21c20c0f7bb8913b6d79b98aa51bf2.jpg",
+    link: "https://api-shein.shein.com/h5/sharejump/appjump?link=RV6xwCwaUbL_8&localcountry=BR&shc=2_RV6xwCwaUbL&url_from=GM75733196900"
+  }
+];
 
-        <div class="flex items-center gap-3 justify-end">
-          <button type="button" id="cancelBtn" class="px-4 py-2 rounded-2xl bg-gray-100">Cancelar</button>
-          <button type="submit" id="saveBtn" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white">Salvar Aluno</button>
-        </div>
-      </form>
+const grid = document.getElementById('grid');
+
+products.forEach((p, i) => {
+  const a = document.createElement('a');
+  a.className = 'card';
+  a.href = p.link;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.style.animationDelay = `${i * 0.07}s`;
+  a.innerHTML = `
+    <div class="card-img-wrap">
+      <img src="${p.imagem}" alt="${p.nome}" loading="lazy"
+        onerror="this.parentElement.innerHTML='<div class=\\'img-placeholder\\'>🛍️</div>'">
     </div>
-  </div>
-
-  <script>
-    const BIMESTERS = 4, NOTES_PER_BIM = 5, STORAGE_KEY = 'sistema_alunos_v1';
-    const TH_APPROVE = 70, TH_RECOVERY = 50;
-
-    const modal = document.getElementById('modal');
-    const openNewBtn = document.getElementById('openNewBtn');
-    const closeModal = document.getElementById('closeModal');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const bimestersContainer = document.getElementById('bimestersContainer');
-    const studentsTable = document.getElementById('studentsTable');
-    const statTotal = document.getElementById('statTotal');
-    const statApproved = document.getElementById('statApproved');
-    const statRecovery = document.getElementById('statRecovery');
-    const statFail = document.getElementById('statFail');
-    const searchInput = document.getElementById('searchInput');
-    const filterStatus = document.getElementById('filterStatus');
-    const exportBtn = document.getElementById('exportBtn');
-    const importFile = document.getElementById('importFile');
-    const clearAllBtn = document.getElementById('clearAllBtn');
-    const studentForm = document.getElementById('studentForm');
-    const modalTitle = document.getElementById('modalTitle');
-
-    let editingIndex = null;
-
-    function createBimInputs() {
-      bimestersContainer.innerHTML = '';
-      for (let b = 0; b < BIMESTERS; b++) {
-        const card = document.createElement('div');
-        card.className = 'p-3 border rounded-lg bg-gray-50';
-        card.innerHTML = `<div class="flex items-center justify-between mb-2">
-          <div class='font-medium'>Bimestre ${b + 1}</div>
-          <div class='text-xs text-gray-500'>Total: <span id='b${b}Total'>0</span>/25</div>
-        </div>`;
-        const inputsWrap = document.createElement('div');
-        inputsWrap.className = 'flex gap-2 flex-wrap';
-        for (let n = 0; n < NOTES_PER_BIM; n++) {
-          const inp = document.createElement('input');
-          inp.type = 'number'; inp.min = '0'; inp.max = '5'; inp.step = '0.1'; inp.value = '0';
-          inp.className = 'nota-input p-2 border rounded text-center';
-          inp.dataset.bim = b; inp.dataset.note = n;
-          inp.addEventListener('input', updateBimTotals);
-          inputsWrap.appendChild(inp);
-        }
-        card.appendChild(inputsWrap);
-        bimestersContainer.appendChild(card);
-      }
-      updateBimTotals();
-    }
-
-    function readNotesFromModal() {
-      const result = [];
-      for (let b = 0; b < BIMESTERS; b++) {
-        const inputs = document.querySelectorAll(`input[data-bim='${b}']`);
-        result.push(Array.from(inputs).map(i => {
-          const v = parseFloat(i.value);
-          if (Number.isNaN(v)) return 0;
-          if (v < 0) return 0;
-          if (v > 5) return 5;
-          return Math.round(v * 10) / 10;
-        }));
-      }
-      return result;
-    }
-
-    function calculateTotals(notesByBim) {
-      let totalGeneral = 0, totals = [];
-      for (let b = 0; b < notesByBim.length; b++) {
-        let sum = notesByBim[b].reduce((a, v) => a + v, 0);
-        if (sum > 25) sum = 25;
-        totals.push(Math.round(sum * 10) / 10);
-        totalGeneral += sum;
-      }
-      return { totals, totalGeneral: Math.round(totalGeneral * 10) / 10 };
-    }
-
-    function determineSituation(total) {
-      if (total >= TH_APPROVE) return 'Aprovado';
-      if (total >= TH_RECOVERY) return 'Recuperação';
-      return 'Reprovado';
-    }
-
-    function updateBimTotals() {
-      const { totals } = calculateTotals(readNotesFromModal());
-      totals.forEach((t, i) => {
-        const el = document.getElementById(`b${i}Total`);
-        if (el) el.textContent = t.toFixed(1);
-      });
-    }
-
-    function loadData() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-      catch { return []; }
-    }
-
-    function saveData(data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }
-
-    function escapeHtml(t) {
-      if (!t) return '';
-      return t.toString().replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
-    }
-
-    function renderTable() {
-      const data = loadData();
-      const q = (searchInput.value || '').toLowerCase();
-      const statusFilter = filterStatus.value;
-
-      studentsTable.innerHTML = '';
-      let cntTotal = 0, cntAprov = 0, cntRec = 0, cntRep = 0;
-
-      data.forEach((s, idx) => {
-        if (q && !(`${s.name} ${s.email}`.toLowerCase().includes(q))) return;
-        if (statusFilter !== 'all' && s.situation !== statusFilter) return;
-
-        cntTotal++;
-        if (s.situation === 'Aprovado') cntAprov++;
-        else if (s.situation === 'Recuperação') cntRec++;
-        else cntRep++;
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50';
-        tr.innerHTML = `
-          <td class="py-3">${escapeHtml(s.name)}</td>
-          <td>${escapeHtml(s.email)}</td>
-          <td>${(s.totals || []).map(t => `${t.toFixed(1)}/25`).join(' | ')}</td>
-          <td class="font-semibold text-center">${s.total.toFixed(1)}</td>
-          <td>
-            <span class="px-3 py-1 rounded-full text-xs font-medium ${s.situation === 'Aprovado' ? 'bg-green-100 text-green-700' : s.situation === 'Recuperação' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${s.situation}</span>
-          </td>
-          <td class="text-right">
-            <button data-idx="${idx}" class="editBtn mr-2 text-sm text-indigo-600">Editar</button>
-            <button data-idx="${idx}" class="delBtn text-sm text-red-600">Excluir</button>
-          </td>`;
-        studentsTable.appendChild(tr);
-      });
-
-      statTotal.textContent = cntTotal;
-      statApproved.textContent = cntAprov;
-      statRecovery.textContent = cntRec;
-      statFail.textContent = cntRep;
-
-      document.querySelectorAll('.delBtn').forEach(b => b.onclick = (e) => {
-        const i = Number(e.currentTarget.dataset.idx);
-        if (confirm('Excluir este aluno?')) deleteStudent(i);
-      });
-      document.querySelectorAll('.editBtn').forEach(b => b.onclick = (e) => {
-        const i = Number(e.currentTarget.dataset.idx);
-        openEditModal(i);
-      });
-    }
-
-    function deleteStudent(index) {
-      const all = loadData();
-      if (index < 0 || index >= all.length) return;
-      all.splice(index, 1);
-      saveData(all);
-      renderTable();
-    }
-
-    function openModal() { modal.classList.remove('hidden'); modal.classList.add('flex'); }
-    function closeModalFn() { modal.classList.add('hidden'); modal.classList.remove('flex'); editingIndex = null; studentForm.reset(); createBimInputs(); }
-
-    openNewBtn.onclick = () => { modalTitle.textContent = 'Novo Aluno'; editingIndex = null; studentForm.reset(); createBimInputs(); openModal(); };
-    closeModal.onclick = closeModalFn;
-    cancelBtn.onclick = closeModalFn;
-
-    function openEditModal(index) {
-      const all = loadData();
-      const s = all[index];
-      if (!s) return;
-      editingIndex = index;
-      modalTitle.textContent = 'Editar Aluno';
-      studentForm.reset();
-      openModal();
-      document.getElementById('name').value = s.name;
-      document.getElementById('email').value = s.email;
-      createBimInputs();
-      // populate notes after inputs exist
-      setTimeout(() => {
-        if (Array.isArray(s.notes)) {
-          s.notes.forEach((bim, b) => {
-            if (!Array.isArray(bim)) return;
-            bim.forEach((val, n) => {
-              const inp = document.querySelector(`input[data-bim='${b}'][data-note='${n}']`);
-              if (inp) inp.value = Number.isFinite(val) ? (Math.round(val * 10) / 10) : 0;
-            });
-          });
-          updateBimTotals();
-        }
-      }, 0);
-    }
-
-    studentForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const nameEl = document.getElementById('name');
-      const emailEl = document.getElementById('email');
-
-      const name = (nameEl.value || '').trim();
-      const email = (emailEl.value || '').trim().toLowerCase();
-
-      if (!name) { alert('Nome é obrigatório.'); return; }
-      if (!email || !email.includes('@')) { alert('Email inválido.'); return; }
-
-      // optional: restrict to @gmail.com only (uncomment if desired)
-      // if (!email.endsWith('@gmail.com')) { alert('O email precisa ser @gmail.com'); return; }
-
-      const notes = readNotesFromModal();
-      const { totals, totalGeneral } = calculateTotals(notes);
-      const situation = determineSituation(totalGeneral);
-
-      const all = loadData();
-
-      // check existing (same name + email) excluding current editingIndex
-      const exists = all.some((aluno, idx) =>
-        aluno.name.trim().toLowerCase() === name.toLowerCase() &&
-        aluno.email.trim().toLowerCase() === email &&
-        idx !== editingIndex
-      );
-
-      if (exists) {
-        alert('Já existe um aluno cadastrado com este nome e email.');
-        return;
-      }
-
-      // preserve created_at when editing, otherwise set now
-      const created_at = (editingIndex !== null && all[editingIndex] && all[editingIndex].created_at) ? all[editingIndex].created_at : new Date().toISOString();
-
-      const payload = {
-        name,
-        email,
-        notes,
-        totals,
-        total: totalGeneral,
-        situation,
-        created_at
-      };
-
-      if (editingIndex === null) {
-        all.push(payload);
-      } else {
-        all[editingIndex] = payload;
-      }
-
-      saveData(all);
-      closeModalFn();
-      renderTable();
-    });
-
-    exportBtn.onclick = () => {
-      const data = loadData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'alunos.json'; a.click(); URL.revokeObjectURL(url);
-    };
-
-    importFile.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      try {
-        const text = await file.text();
-        const json = JSON.parse(text);
-        if (!Array.isArray(json)) throw new Error('Formato inválido');
-        if (confirm('Deseja mesclar os dados importados com os existentes? (OK = mesclar, Cancelar = substituir)')) {
-          const merged = [...loadData(), ...json];
-          saveData(merged);
-        } else saveData(json);
-        renderTable();
-      } catch {
-        alert('Arquivo inválido.');
-      } finally {
-        importFile.value = ''; // reset input
-      }
-    };
-
-    clearAllBtn.onclick = () => { if (confirm('Tem certeza que deseja apagar todos os dados?')) { localStorage.removeItem(STORAGE_KEY); renderTable(); } };
-
-    searchInput.oninput = renderTable;
-    filterStatus.onchange = renderTable;
-
-    // init
-    createBimInputs();
-    renderTable();
-    lucide.createIcons();
-  </script>
-
+    <div class="card-body">
+      <div class="card-name">${p.nome}</div>
+      <div class="card-cta">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        Ver na Shein
+      </div>
+    </div>`;
+  grid.appendChild(a);
+});
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
